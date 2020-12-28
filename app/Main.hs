@@ -14,8 +14,7 @@ import Data.Ratio ((%))
 import Data.Maybe (fromMaybe)
 import Diagrams.Backend.SVG (renderSVG)
 import Diagrams.TwoD.Size
-import Options.Applicative
-import Text.Read (readMaybe)
+import Options.Applicative (execParser)
 
 import Sound.MIDI.File.Load (fromFile)
 import System.FilePath ((-<.>))
@@ -27,10 +26,10 @@ import EqualTemperament
     , semitonesBetweenKeys'
 
     , Key(..)
-    , keyFromName
     , Pitch(..)
     , pitchFromMidiPitch
     , pitchToMidiValue)
+import Arguments
 import PianoRoll
 import Types
 import Utils
@@ -108,81 +107,6 @@ runProgram ProgramOptions{..} = do
 
     renderSVG outputFile' (mkWidth (fromIntegral outputWidth)) diagram
 
-data ProgramOptions = ProgramOptions
-  { inputFile  :: Path.FilePath
-  , inputKey :: Key
-  , outputFile :: Maybe Path.FilePath
-  , targetKey :: Key
-  , startBar :: Int
-  , endBar :: Maybe Int
-  , beatsPerBar :: Int
-  , beatUnit :: Int
-  , minimumPitch :: Pitch
-  , maximumPitch :: Pitch
-  , outputWidth :: Int
-  }
-
-optionParser :: Parser ProgramOptions
-optionParser = ProgramOptions
-    <$> strArgument (
-           help "input midi file"
-        <> metavar "INPUT-FILE" )
-    <*> argument (maybeReader keyFromName) (
-           help "input key of piece"
-        <> metavar "INPUT-KEY" )
-    <*> option readMaybeMaybe (
-           long "output-file"
-        <> short 'o'
-        <> value Nothing
-        <> showDefaultWith (const "<INPUT-FILE>.svg")
-        <> help "name of output SVG file" )
-    <*> option auto (
-           long "target-key"
-        <> value (read "C")
-        <> showDefault
-        <> help "key to transpose" )
-    <*> option auto (
-           long "start-bar"
-        <> value 0
-        <> showDefault
-        <> help "starting bar from which to plot" )
-    <*> option readMaybeMaybe (
-           long "end-bar"
-        <> value Nothing
-        <> showDefaultWith (const "last bar in song")
-        <> help "last bar to plot" )
-    <*> option auto (
-           long "beats-per-bar"
-        <> value 4
-        <> showDefault
-        <> help "e.g. in 3:4, the BPB is 3" )
-    <*> option auto (
-           long "beat-unit"
-        <> value 4
-        <> showDefault
-        <> help "e.g. in 3:4, the beat unit is 4" )
-    <*> option auto (
-           long "min-pitch"
-        <> value (read "C2")
-        <> showDefault
-        <> help "lowest allowable pitch to plot" )
-    <*> option auto (
-           long "max-pitch"
-        <> value (read "C5")
-        <> showDefault
-        <> help "highest allowable pitch to plot" )
-    <*> option auto (
-           long "output-width"
-        <> short 'w'
-        <> value 1000
-        <> showDefault
-        <> help "width of one bar in pixels" )
-    where readMaybeMaybe :: (Read a) => ReadM (Maybe a)
-          readMaybeMaybe = maybeReader (fmap Just . readMaybe)
-
-programOptions :: ParserInfo ProgramOptions
-programOptions = info (optionParser <**> helper) (
-    progDesc "Modify the key of a MIDI file and plot the result")
 
 main :: IO ()
 main = runProgram =<< execParser programOptions
