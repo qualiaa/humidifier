@@ -7,6 +7,7 @@ module Utils
   , clipDataXRange
   , mapRanges
   , mapRangeKeys
+  , ratioToFrac
   ) where
 
 import qualified Data.Map as M
@@ -39,3 +40,6 @@ mapRanges f = M.map $ map $ bimapBoth f
 
 mapRangeKeys :: (Ord k, Ord k') => (k -> k') -> RangeData k v -> RangeData k' v
 mapRangeKeys = M.mapKeys
+
+ratioToFrac :: (Real a, Fractional b) => a -> b
+ratioToFrac = fromRational . toRational

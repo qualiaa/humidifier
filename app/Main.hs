@@ -7,7 +7,6 @@ import qualified Sound.MIDI.File as MIDIFile
 import qualified Sound.MIDI.File.Event as Event
 import qualified Sound.MIDI.Message.Channel as Message
 import qualified Sound.MIDI.Message.Channel.Voice as Voice
-import qualified System.FilePath as Path
 -- import qualified Sound.MIDI.File.Event.Meta as MetaEvent
 import Data.EventList.Relative.TimeBody (toAbsoluteEventList)
 import Data.Function ((&))
@@ -35,10 +34,6 @@ import EqualTemperament
 import PianoRoll
 import Types
 import Utils
-
--- middleC = centreNoteOfKey 0
-
-ratioToNum = fromRational . toRational
 
 data NoteEvent = On | Off deriving (Eq, Show)
 type NoteEvents t = M.Map Voice.Pitch [(t, NoteEvent)]
@@ -77,8 +72,6 @@ normaliseToMiddleOfKey targetKey originalKey notes =
                                        bottomNote
           totalShift = keyShift + noteShift
 
-minus a b = a - b
-
 runProgram :: ProgramOptions -> IO ()
 runProgram ProgramOptions{..} = do
     -- Load MIDI file
@@ -99,18 +92,17 @@ runProgram ProgramOptions{..} = do
 
         outputFile' = fromMaybe (inputFile -<.> ".svg") outputFile
 
-        lastBar = maximum
-            $ fmap (maximum . map snd) allNotes
+        lastBar = maximum $ fmap (maximum . map snd) allNotes
 
         barRange = (fromIntegral startBar, maybe lastBar fromIntegral endBar)
 
         clippedNotes = mapRanges ignoreClip $ clipDataXRange allNotes barRange
         clippedNotesInKey = normaliseToMiddleOfKey targetKey inputKey clippedNotes
 
-        barAxis   = AxisRange $ bimapBoth ratioToNum barRange
+        barAxis   = AxisRange $ bimapBoth ratioToFrac barRange
         pitchAxis = AxisRange $ bimapBoth pitchToMidiValue (minimumPitch, maximumPitch)
 
-        rollData = clippedNotesInKey & mapRanges ratioToNum
+        rollData = clippedNotesInKey & mapRanges ratioToFrac
                                      & mapRangeKeys fromPitch
         diagram = pianoRoll rollData beatsPerBar barAxis pitchAxis
 

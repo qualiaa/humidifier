@@ -7,7 +7,6 @@ module PianoRoll
   ) where
 
 import qualified Data.Map as M
-import Data.Maybe (mapMaybe)
 
 import Diagrams.Backend.SVG.CmdLine
 import Diagrams.Prelude
