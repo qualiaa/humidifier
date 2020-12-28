@@ -103,6 +103,7 @@ runProgram ProgramOptions{..} = do
 
         rollData = clippedNotesInKey & mapRanges ratioToFrac
                                      & mapRangeKeys fromPitch
+                                     & fmap (filter (\(a, b) -> abs (a-b) > 0.001))
         diagram = pianoRoll rollData beatsPerBar barAxis pitchAxis
 
     renderSVG outputFile' (mkWidth (fromIntegral outputWidth)) diagram
