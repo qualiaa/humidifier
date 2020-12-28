@@ -8,6 +8,20 @@ a niche!
 
 Should work out of the box with Haskell Stack or Cabal.
 
+## Usage
+
+See
+
+```
+humidify --help
+```
+
+for usage options.
+
+Setting the beat unit and beats per bar will probably break things at the moment.
+
+
 ## Example Output
 
-![](example/08 Because - Harmony Vocal 1.svg)
+![](https://github.com/qualiaa/humidifier/blob/master/example/08%20Because%20-%20Harmony%20Vocal%201.svg?raw=true)
+
