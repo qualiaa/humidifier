@@ -84,7 +84,7 @@ runProgram ProgramOptions{..} = do
                    -- Convert times to absolute
                    & toAbsoluteEventList mempty
                    -- Convert times to quarter notes
-                   & AbsEventList.mapTime ((% ppq) . fromIntegral)
+                   & AbsEventList.mapTime ((1+) . (% (4*ppq)) . fromIntegral)
 
         allNotes = mapRangeKeys pitchFromMidiPitch
             . eventsToDurations $ trackToNoteEvents track
