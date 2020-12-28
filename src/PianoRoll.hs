@@ -59,9 +59,12 @@ pianoRoll pitchNotes beatsPerBar xlim ylim = g
           pitchNotes' = clipDataXRange pitchNotes (x0, x1)
 
           -- Diagram showing clipped data
-          pitchLinesAbs = position [
+          pitchLinesAbsShapes = position [
                 (p2 (0, fromIntegral y), pitchLine xBars)
-                | (y, xBars) <- M.toList pitchNotes'] # lw none # fc black # translateY 0.5
+                | (y, xBars) <- M.toList pitchNotes'] # translateY 0.5
+
+          pitchLinesAbs = pitchLinesAbsShapes # lw none # fc orange # opacity 0.5
+                       <> pitchLinesAbsShapes # lw thin
 
           -- Bounds and width of graph contents (excluding empty margins)
           (Just (minX, maxX), Just (minY, maxY)) = (extentX pitchLinesAbs,
@@ -124,7 +127,7 @@ pianoRoll pitchNotes beatsPerBar xlim ylim = g
               (p2 (fromIntegral x, -0.75), text $ show x) | x <- xs] :: Diagram B
 
 
-          graphAxes = (vrule (y1-y0) # alignB {- <> hrule (x1-x0) # alignL-}) # lw thick
-              <> (barLabels <> pitchLabels) # fontSizeL 0.6
+          graphAxes = vrule (y1-y0) # alignB # lw thick
+              <> (barLabels <> pitchLabels) # fontSizeL 0.3
 
-          g = (graphAxes  <> graphContents) # frame 1.5
+          g = (graphAxes  <> graphContents) # scaleY 0.25 # frame 1.5
