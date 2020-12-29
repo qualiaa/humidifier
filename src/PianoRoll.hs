@@ -1,9 +1,11 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module PianoRoll
   ( pianoRoll
+  , PlotSettings(..)
   ) where
 
 import qualified Data.Map as M
@@ -14,6 +16,13 @@ import Diagrams.Prelude
 import EqualTemperament (isSharp, pitchFromMidiValue)
 import Types
 import Utils
+
+
+data PlotSettings = PlotSettings { showXTicks :: Bool
+                                 , showYTicks :: Bool
+                                 , tight :: Bool
+                                 , yScale :: Double
+                                 }
 
 -- TODO Generalise for different time signatures
 -- TODO Check that when sx is 0 the separation is right
@@ -35,8 +44,6 @@ beatLines x0 x1 h = hsep 1 lines # translateX (1+sx) # scaleX (1/4)
           -- Drop the beats *dab*
           lineStyles' = drop (x0' `mod` beatsPerBar) lineStyles
 
-
-
 note :: Double -> Diagram B
 note len = unitSquare # translateX 0.5 # scaleX len
 
@@ -46,14 +53,14 @@ pitchLine spans = position [(p2 (x0, 0), note $ x1 - x0)
 
     where spans' = map (bimapBoth ignoreClip) spans
 
-
 -- Totally hard-coded graph for notes by pitch
 pianoRoll :: RangeData Int Double
           -> Int
           -> AxisLimit Double
           -> AxisLimit Int
+          -> PlotSettings
           -> Diagram B
-pianoRoll pitchNotes beatsPerBar xlim ylim = g
+pianoRoll pitchNotes beatsPerBar xlim ylim PlotSettings{..} = g
 
     where -- Input clipped to given x-range
           pitchNotes' = clipDataXRange pitchNotes (x0, x1)
@@ -67,21 +74,21 @@ pianoRoll pitchNotes beatsPerBar xlim ylim = g
                        <> pitchLinesAbsShapes # lw thin
 
           -- Bounds and width of graph contents (excluding empty margins)
-          (Just (minX, maxX), Just (minY, maxY)) = (extentX pitchLinesAbs,
-                                                    extentY pitchLinesAbs)
-          --(w, h) = (maxX - minX, maxY - minY)
+          Just (minY, maxY) = extentY pitchLinesAbs
+
           (w, h) = (x1 - x0, y1 - y0)
 
-          -- The vertical bounds of the graph area
           (x0, x1) = limToRange xlim
           (y0', y1') = limToRange ylim
 
           y0 = max 0 $ min minY (fromIntegral y0')
           y1 = max maxY (fromIntegral y1')
+
+          xs = [ceiling x0 .. floor x1] :: [Int]
           ys = [round y0.. round y1 - 1] :: [Int]
 
           -- Grid of beats and bars limited to drawn region
-          numBeats = round $ w * fromIntegral beatsPerBar
+          -- numBeats = round $ w * fromIntegral beatsPerBar
           grid = beatLines x0 x1 h
 
           -- Shade in accidental pitches
@@ -89,7 +96,7 @@ pianoRoll pitchNotes beatsPerBar xlim ylim = g
 
           sharpShading = position [(p2 (0, fromIntegral pitch),
 
-                                    rect w 1 # fillColor black
+                                    rect w 1 # fc black
                                              # lw none
                                              # opacity 0.2)
 
@@ -98,7 +105,7 @@ pianoRoll pitchNotes beatsPerBar xlim ylim = g
 
           -- Lines demarking octaves
           octavePitches = filter (\y -> y `mod` 12 == 0) ys
-          octaveLines = position [(p2 (0, fromIntegral pitch), hrule (x1-x0))
+          octaveLines = position [(p2 (0, fromIntegral pitch), hrule w)
                                  | pitch <- octavePitches]
               # alignL # translateY (-y0)
 
@@ -110,24 +117,32 @@ pianoRoll pitchNotes beatsPerBar xlim ylim = g
           --       # lw none
           --       # alignBL
 
-          graphContents = pitchLinesRel
-              <> sharpShading
-              <> octaveLines
-              <> grid
+          graphContents = (  pitchLinesRel
+                          <> octaveLines
+                          <> grid
+                          <> sharpShading
+                          ) # scaleY yScale
               -- <> background
 
           -- Axis labels
           pitchNames = map (show . pitchFromMidiValue) ys
-          pitchPositions = [p2 (-1.5, fromIntegral y) | y <- ys]
-          pitchLabels = translateY 0.5 . alignB . position $
-              zip pitchPositions (map text pitchNames) :: Diagram B
+          pitchLabels = position [(p2 (-0.5, fromIntegral y * yScale), text n)
+                                 | (y, n) <- zip ys pitchNames]
+              # alignB
+              # translateY (0.5*yScale)
 
-          xs = [ceiling x0 .. floor x1] :: [Int]
+          barTicks = mconcat [p2 (x', 0) ~~ p2 (x', -0.075)
+                             | x <- xs, let x' = fromIntegral x]
+              # alignL
+              # lw thin :: Diagram B
           barLabels = alignL $ position [
-              (p2 (fromIntegral x, -0.75), text $ show x) | x <- xs] :: Diagram B
+              (p2 (fromIntegral x, -0.20), text $ show x) | x <- xs] :: Diagram B
 
 
-          graphAxes = vrule (y1-y0) # alignB # lw thick
-              <> (barLabels <> pitchLabels) # fontSizeL 0.3
+          graphAxes = vrule h # alignB # scaleY yScale # lw thick
+                   <> mwhen showYTicks (
+                         pitchLabels # fontSizeN 0.015)
+                   <> mwhen showXTicks (
+                         (barTicks <> barLabels) # fontSizeN 0.02)
 
-          g = (graphAxes  <> graphContents) # scaleY 0.25 # frame 1.5
+          g = (graphAxes <> graphContents) # if tight then id else frame 0.25

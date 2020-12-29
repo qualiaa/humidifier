@@ -2,12 +2,16 @@
 
 module Utils
   ( bimapBoth
+  , mwhen
+  , munless
+  , ratioToFrac
+
   , limToRange
   , ignoreClip
   , clipDataXRange
+
   , mapRanges
   , mapRangeKeys
-  , ratioToFrac
   ) where
 
 import qualified Data.Map as M
@@ -15,6 +19,11 @@ import Data.Bifunctor
 import Types
 
 bimapBoth f = bimap f f
+
+mwhen   :: (Monoid m) => Bool -> m -> m
+munless :: (Monoid m) => Bool -> m -> m
+mwhen p m = if p then m else mempty
+munless = mwhen . not
 
 clipDataXRange :: (Ord k, Num a, Ord a)
                => RangeData k a

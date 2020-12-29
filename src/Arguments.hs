@@ -23,7 +23,13 @@ data ProgramOptions = ProgramOptions
   , minimumPitch :: Pitch
   , maximumPitch :: Pitch
   , outputWidth :: Int
+  , xticks :: Bool
+  , yticks :: Bool
+  , tight :: Bool
+  , yScale :: Double
   }
+
+invSwitch = fmap not . switch
 
 optionParser :: Parser ProgramOptions
 optionParser = ProgramOptions
@@ -80,6 +86,20 @@ optionParser = ProgramOptions
         <> value 1000
         <> showDefault
         <> help "width of output image" )
+    <*> invSwitch (
+           long "no-xticks"
+        <> help "do not show bar numbers along X axis" )
+    <*> switch (
+           long "yticks"
+        <> help "show pitch names in SPN along Y axis" )
+    <*> switch (
+           long "tight"
+        <> help "graph will tightly fit image" )
+    <*> option auto (
+           long "yscale"
+        <> value 0.1
+        <> showDefault
+        <> help "height of individual pitch line" )
 
 parseToMaybe :: (Read a) => String -> Maybe (Maybe a)
 parseToMaybe = fmap Just . readMaybe
