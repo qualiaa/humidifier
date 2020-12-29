@@ -1,12 +1,14 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.3.
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
+--
+-- hash: 46285f949ad0b5cde04bfd3ca0ca7cedd0fedff80bc2ff53a5cec42af03620e3
 
 name:           humidifier
-version:        0.1.2.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/humidifier#readme>
+version:        0.1.3.0
+description:    Please see the README on GitHub at <https://github.com/qualiaa/humidifier#readme>
 homepage:       https://github.com/qualiaa/humidifier#readme
 bug-reports:    https://github.com/qualiaa/humidifier/issues
 author:         Jamie Bayne
